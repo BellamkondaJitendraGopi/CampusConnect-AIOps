@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Job - Recruiter</title>
+</head>
+<body>
+<h2>Post a New Job</h2>
+<form action="/recruiter/add-job" method="post">
+    <label>Company Name:</label><br/>
+    <input type="text" name="companyName" required/><br/><br/>
+
+    <label>Role:</label><br/>
+    <input type="text" name="role" required/><br/><br/>
+
+    <label>Description:</label><br/>
+    <textarea name="description" rows="4" cols="40"></textarea><br/><br/>
+
+    <label>Location:</label><br/>
+    <input type="text" name="location" required/><br/><br/>
+
+    <label>Package (LPA):</label><br/>
+    <input type="number" step="0.01" name="packageAmount"/><br/><br/>
+
+    <button type="submit">Post Job</button>
+</form>
+<br/>
+<a href="/recruiter/dashboard">Back to Dashboard</a>
+</body>
+</html>

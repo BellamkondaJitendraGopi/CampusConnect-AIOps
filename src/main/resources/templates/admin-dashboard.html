@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Admin Dashboard - CampusConnect</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            background: #f4f6f8;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100%;
+            background: #1e3c72;
+            color: white;
+            padding-top: 60px;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+
+        .sidebar a:hover {
+            background: #16315f;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 220px;
+            right: 0;
+            height: 60px;
+            background: #1e3c72;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .navbar h1 {
+            font-size: 20px;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* Main content */
+        .main {
+            margin-left: 220px;
+            padding: 80px 30px 30px 30px;
+        }
+
+        .cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1 1 200px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .card h2 {
+            margin: 10px 0;
+            color: #1e3c72;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .card a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #1e3c72;
+            color: white;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .card a:hover {
+            background: #16315f;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Admin Panel</h2>
+        <a href="/admin/dashboard">Dashboard</a>
+        <a href="/admin/add-job">Add Job</a>
+        <a href="/admin/jobs">View Jobs</a>
+        <a href="#">Manage Users</a>
+        <a href="/logout">Logout</a>
+    </div>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <h1>Welcome, <span th:text="${session.loggedInUser.fullName}">Admin</span></h1>
+        <a href="/logout">Logout</a>
+    </div>
+
+    <!-- Main content -->
+    <div class="main">
+        <div class="cards">
+            <div class="card">
+                <h2 th:text="${jobsCount}">0</h2>
+                <p>Total Jobs Posted</p>
+                <a href="/admin/jobs">View Jobs</a>
+            </div>
+            <div class="card">
+                <h2 th:text="${usersCount}">0</h2>
+                <p>Total Users</p>
+                <a href="#">Manage Users</a>
+            </div>
+            <div class="card">
+                <h2 th:text="${recruitersCount}">0</h2>
+                <p>Total Recruiters</p>
+            </div>
+            <div class="card">
+                <h2 th:text="${studentsCount}">0</h2>
+                <p>Total Students</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
