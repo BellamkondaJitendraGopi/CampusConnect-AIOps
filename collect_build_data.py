@@ -9,87 +9,115 @@ from datetime import datetime
 JENKINS_URL = "http://localhost:8080"
 JOB_NAME = "CampusConnect-CI"
 USERNAME = "adminjitendra"
-API_TOKEN = "11783b4ba9f27de518ba1fd9be02f4d1f5"
+API_TOKEN = "YOUR_API_TOKEN_HERE"
+
+DATASET_FILE = "dataset.csv"
+LOG_DIR = "logs"
+MAX_BUILDS = 50   # Number of recent builds to collect
+
+os.makedirs(LOG_DIR, exist_ok=True)
 
 # ==============================
-# FETCH BUILD METADATA
+# FETCH BUILDS LIST
 # ==============================
-build_api = f"{JENKINS_URL}/job/{JOB_NAME}/lastBuild/api/json"
-response = requests.get(build_api, auth=(USERNAME, API_TOKEN))
-#data = response.json()
-#i am temporarily replacing this 19 line with the following three lines
+builds_api = f"{JENKINS_URL}/job/{JOB_NAME}/api/json?tree=builds[number,result,timestamp,duration,changeSet[items[commitId,msg,author[fullName],affectedPaths]]]"
+response = requests.get(builds_api, auth=(USERNAME, API_TOKEN))
 
-print("Status Code:", response.status_code)
-print("Response Text:", response.text)
-exit()
+if response.status_code != 200:
+    print("Failed to fetch builds list")
+    print("Status Code:", response.status_code)
+    print("Response:", response.text)
+    exit()
 
-build_number = data["number"]
-result = data["result"]
-duration = data["duration"]
-timestamp = datetime.fromtimestamp(data["timestamp"]/1000)
+data = response.json()
+builds = data.get("builds", [])[:MAX_BUILDS]
 
 # ==============================
-# EXTRACT COMMIT INFO
+# LOAD EXISTING BUILD NUMBERS (avoid duplicates)
 # ==============================
-change_items = data.get("changeSet", {}).get("items", [])
+existing_builds = set()
 
-if change_items:
-    commit_id = change_items[0].get("commitId", "")
-    author = change_items[0].get("author", {}).get("fullName", "")
-    affected_paths = change_items[0].get("affectedPaths", [])
-    files_changed = len(affected_paths)
-    commit_message = change_items[0].get("msg", "")
-    commit_message_length = len(commit_message)
-else:
-    commit_id = ""
-    author = ""
-    files_changed = 0
-    commit_message_length = 0
+if os.path.isfile(DATASET_FILE):
+    with open(DATASET_FILE, "r") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            existing_builds.add(int(row["build_number"]))
 
 # ==============================
-# FETCH CONSOLE LOG
+# PREPARE CSV
 # ==============================
-log_url = f"{JENKINS_URL}/job/{JOB_NAME}/lastBuild/consoleText"
-log_response = requests.get(log_url, auth=(USERNAME, API_TOKEN))
-log_text = log_response.text
+file_exists = os.path.isfile(DATASET_FILE)
+csv_file = open(DATASET_FILE, "a", newline="", encoding="utf-8")
+writer = csv.writer(csv_file)
 
-log_lines = len(log_text.splitlines())
-error_count = log_text.lower().count("error")
-warning_count = log_text.lower().count("warning")
-
-# Save raw log
-os.makedirs("logs", exist_ok=True)
-with open(f"logs/build_{build_number}.txt", "w", encoding="utf-8") as f:
-    f.write(log_text)
+if not file_exists:
+    writer.writerow([
+        "build_number",
+        "timestamp",
+        "duration_ms",
+        "result",
+        "commit_id",
+        "author",
+        "files_changed",
+        "commit_message_length",
+        "log_lines",
+        "error_count",
+        "warning_count"
+    ])
 
 # ==============================
-# APPEND TO CSV DATASET
+# PROCESS EACH BUILD
 # ==============================
-file_exists = os.path.isfile("dataset.csv")
+for build in builds:
 
-with open("dataset.csv", "a", newline="") as f:
-    writer = csv.writer(f)
+    build_number = build["number"]
 
-    if not file_exists:
-        writer.writerow([
-            "build_number",
-            "timestamp",
-            "duration_ms",
-            "result",
-            "commit_id",
-            "author",
-            "files_changed",
-            "commit_message_length",
-            "log_lines",
-            "error_count",
-            "warning_count"
-        ])
+    # Skip already processed builds
+    if build_number in existing_builds:
+        continue
 
+    result = build.get("result")
+    duration = build.get("duration")
+    timestamp = datetime.fromtimestamp(build["timestamp"] / 1000)
+
+    change_items = build.get("changeSet", {}).get("items", [])
+
+    if change_items:
+        commit_id = change_items[0].get("commitId", "")
+        author = change_items[0].get("author", {}).get("fullName", "")
+        affected_paths = change_items[0].get("affectedPaths", [])
+        files_changed = len(affected_paths)
+        commit_message = change_items[0].get("msg", "")
+        commit_message_length = len(commit_message)
+    else:
+        commit_id = ""
+        author = ""
+        files_changed = 0
+        commit_message_length = 0
+
+    # ==============================
+    # FETCH CONSOLE LOG
+    # ==============================
+    log_url = f"{JENKINS_URL}/job/{JOB_NAME}/{build_number}/consoleText"
+    log_response = requests.get(log_url, auth=(USERNAME, API_TOKEN))
+    log_text = log_response.text
+
+    log_lines = len(log_text.splitlines())
+    error_count = log_text.lower().count("error")
+    warning_count = log_text.lower().count("warning")
+
+    # Save raw log
+    with open(f"{LOG_DIR}/build_{build_number}.txt", "w", encoding="utf-8") as f:
+        f.write(log_text)
+
+    # ==============================
+    # WRITE TO DATASET
+    # ==============================
     writer.writerow([
         build_number,
         timestamp,
         duration,
-        result,
+        result,  # SUCCESS / FAILURE / ABORTED / etc
         commit_id,
         author,
         files_changed,
@@ -99,4 +127,8 @@ with open("dataset.csv", "a", newline="") as f:
         warning_count
     ])
 
-print(f"Build #{build_number} data collected successfully.")
+    print(f"Collected Build #{build_number} ({result})")
+
+csv_file.close()
+
+print("Dataset update complete.")
