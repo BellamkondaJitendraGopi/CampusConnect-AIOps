@@ -8,15 +8,20 @@ from datetime import datetime
 # ==============================
 JENKINS_URL = "http://localhost:8080"
 JOB_NAME = "CampusConnect-CI"
-USERNAME = "your_jenkins_username"
-API_TOKEN = "your_new_api_token"
+USERNAME = "adminjitendra"
+API_TOKEN = "11783b4ba9f27de518ba1fd9be02f4d1f5"
 
 # ==============================
 # FETCH BUILD METADATA
 # ==============================
 build_api = f"{JENKINS_URL}/job/{JOB_NAME}/lastBuild/api/json"
 response = requests.get(build_api, auth=(USERNAME, API_TOKEN))
-data = response.json()
+#data = response.json()
+#i am temporarily replacing this 19 line with the following three lines
+
+print("Status Code:", response.status_code)
+print("Response Text:", response.text)
+exit()
 
 build_number = data["number"]
 result = data["result"]
