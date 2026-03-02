@@ -9,7 +9,7 @@ from datetime import datetime
 JENKINS_URL = "http://localhost:8080"
 JOB_NAME = "CampusConnect-CI"
 USERNAME = "adminjitendra"
-API_TOKEN = "YOUR_API_TOKEN_HERE"
+API_TOKEN = "15xQsQq9mJdXBjwiuzEf7Hp7SoLwNLVgen"
 
 DATASET_FILE = "dataset.csv"
 LOG_DIR = "logs"
